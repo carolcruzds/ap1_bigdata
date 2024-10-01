@@ -31,7 +31,6 @@ public class ClienteController {
         return clienteRepository.findAll();
     }
 
-    // Buscar cliente por ID
     @GetMapping("/{id}")
     public ResponseEntity<Cliente> buscarClientePorId(@PathVariable Long id) {
         Optional<Cliente> cliente = clienteRepository.findById(id);
@@ -40,7 +39,7 @@ public class ClienteController {
         } else {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
         }
-    }
+    }    
 
     // Atualizar cliente por ID
     @PutMapping("/{id}")
