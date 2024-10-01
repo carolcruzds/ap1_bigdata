@@ -1,49 +1,75 @@
 package ap1.bigdata.gerenciamento.controller;
 
-import java.util.List;
-
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
-
 import ap1.bigdata.gerenciamento.model.Cliente;
-import ap1.bigdata.gerenciamento.services.ClienteService;
+import ap1.bigdata.gerenciamento.repository.ClienteRepository;
 import jakarta.validation.Valid;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
+import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/clientes")
 public class ClienteController {
 
     @Autowired
-    private ClienteService clienteService;
+    private ClienteRepository clienteRepository;
 
+    // Criar um novo cliente
     @PostMapping
-    public ResponseEntity<Cliente> create(@Valid @RequestBody Cliente cliente) {
-        Cliente savedCliente = clienteService.save(cliente);
-        return ResponseEntity.ok(savedCliente);
+    public ResponseEntity<Cliente> criarCliente(@Valid @RequestBody Cliente cliente) {
+        Cliente novoCliente = clienteRepository.save(cliente);
+        return ResponseEntity.status(HttpStatus.CREATED).body(novoCliente);
     }
 
+    // Buscar todos os clientes
     @GetMapping
-    public ResponseEntity<List<Cliente>> findAll() {
-        List<Cliente> clientes = clienteService.findAll();
-        return ResponseEntity.ok(clientes);
+    public List<Cliente> listarTodosClientes() {
+        return clienteRepository.findAll();
     }
 
+    // Buscar cliente por ID
     @GetMapping("/{id}")
-    public ResponseEntity<Cliente> findById(@PathVariable Long id) {
-        Cliente cliente = clienteService.findById(id);
-        return ResponseEntity.ok(cliente);
+    public ResponseEntity<Cliente> buscarClientePorId(@PathVariable Long id) {
+        Optional<Cliente> cliente = clienteRepository.findById(id);
+        if (cliente.isPresent()) {
+            return ResponseEntity.ok(cliente.get());
+        } else {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
+        }
     }
 
+    // Atualizar cliente por ID
+    @PutMapping("/{id}")
+    public ResponseEntity<Cliente> atualizarCliente(@PathVariable Long id, @Valid @RequestBody Cliente clienteAtualizado) {
+        Optional<Cliente> clienteExistente = clienteRepository.findById(id);
+        if (clienteExistente.isPresent()) {
+            Cliente cliente = clienteExistente.get();
+            cliente.setNome(clienteAtualizado.getNome());
+            cliente.setEmail(clienteAtualizado.getEmail());
+            cliente.setCpf(clienteAtualizado.getCpf());
+            cliente.setDataNascimento(clienteAtualizado.getDataNascimento());
+            cliente.setTelefone(clienteAtualizado.getTelefone());
+
+            Cliente clienteSalvo = clienteRepository.save(cliente);
+            return ResponseEntity.ok(clienteSalvo);
+        } else {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
+        }
+    }
+
+    // Deletar cliente por ID
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> delete(@PathVariable Long id) {
-        clienteService.delete(id);
-        return ResponseEntity.noContent().build();
+    public ResponseEntity<Void> deletarCliente(@PathVariable Long id) {
+        Optional<Cliente> cliente = clienteRepository.findById(id);
+        if (cliente.isPresent()) {
+            clienteRepository.delete(cliente.get());
+            return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
+        } else {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
+        }
     }
 }
